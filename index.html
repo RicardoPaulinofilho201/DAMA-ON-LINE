@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DECOLAR · Damas Arena</title>
+<style>
+:root{--bg:#101827;--panel:#1b2940;--panel2:#243550;--gold:#ffd166;--text:#f5f7fb;--muted:#aab7ca;--green:#42d392;--red:#ff7272;
+--light:#f0d9ad;--dark:#8c5b38;--border:#72502f}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#203451,#101827 55%);color:var(--text);font-family:system-ui,Arial,sans-serif;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px max(16px,calc((100% - 1100px)/2));background:#0b1321cc;border-bottom:1px solid #ffffff18;position:sticky;top:0;z-index:2}
+.logo{font-weight:900;font-size:22px;letter-spacing:.5px}.logo span{color:var(--gold)}
+.wallet{background:#293953;padding:9px 13px;border-radius:12px;font-weight:800;color:var(--gold)}
+main{max-width:1100px;margin:24px auto;padding:0 16px}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.hero h1{margin:0 0 5px;font-size:clamp(25px,5vw,38px)}
+.muted{color:var(--muted);font-size:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.tab,button{border:0;border-radius:11px;padding:11px 15px;font-weight:750;cursor:pointer}
+.tab{background:#263750;color:var(--text)}
+.tab.active,button.primary{background:var(--gold);color:#172033}
+.tab:focus,button:focus{outline:2px solid white;outline-offset:2px}
+.panel{background:linear-gradient(145deg,#1d2c43,#172337);border:1px solid #ffffff16;border-radius:18px;padding:18px;box-shadow:0 12px 30px #0003}
+.grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+.section{display:none}.section.active{display:block}
+.board-wrap{max-width:540px;margin:10px auto}
+.board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;border:7px solid var(--border);border-radius:9px;overflow:hidden;box-shadow:0 12px 30px #0006;transition:border-color .3s}
+.sq{display:grid;place-items:center;position:relative;background:var(--light);transition:background .3s}
+.sq.dark{background:var(--dark);cursor:pointer}
+.sq.selected{outline:4px solid var(--gold);outline-offset:-4px}
+.sq.hint{box-shadow:inset 0 0 0 4px #42d39288}
+.piece{width:72%;height:72%;border-radius:50%;box-shadow:inset 0 4px 5px #ffffff55,0 4px 5px #0006;display:grid;place-items:center;border:3px solid #0005}
+.piece.red{background:linear-gradient(145deg,#ff8585,#b82e3e)}
+.piece.black{background:linear-gradient(145deg,#596579,#172033)}
+.piece.king:after{content:"♛";font-size:clamp(16px,3vw,25px);color:var(--gold);text-shadow:0 2px 2px #000}
+.status{text-align:center;font-weight:800;margin:12px 0;color:var(--gold)}
+.controls{display:flex;justify-content:center;gap:9px;flex-wrap:wrap}
+button.secondary{background:#314560;color:white}button:disabled{opacity:.45;cursor:not-allowed}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:#263750;padding:14px;border-radius:13px}
+.stat strong{display:block;font-size:23px;color:var(--gold)}
+.list{display:grid;gap:9px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;background:#263750;border-radius:12px}
+.rank{font-weight:900;color:var(--gold);width:28px}
+.item small{display:block;color:var(--muted)}
+.tag{font-size:12px;color:var(--green);font-weight:800}
+input{background:#101b2b;color:white;border:1px solid #52627a;border-radius:10px;padding:11px;max-width:220px}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:14px}
+.avatar{width:64px;height:64px;border-radius:50%;background:#314560;display:grid;place-items:center;font-size:28px;border:3px solid var(--gold);overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar-pick{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.avatar-option{width:52px;height:52px;border-radius:50%;background:#314560;display:grid;place-items:center;font-size:24px;cursor:pointer;border:3px solid transparent;transition:.2s}
+.avatar-option:hover{border-color:#ffffff55}
+.avatar-option.selected{border-color:var(--gold)}
+.avatar-option img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+@media(max-width:760px){.grid{grid-template-columns:1fr}header{padding:12px 15px}.panel{padding:13px}.board{border-width:5px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🚀 DECOLAR <span>· DAMAS ARENA</span></div>
+  <div class="wallet">🪙 <span id="coins">1.000</span> fichas</div>
+</header>
+<main>
+  <div class="hero">
+    <div>
+      <h1>Entre na arena!</h1>
+      <div class="muted">Jogue, vença partidas e suba no ranking.</div>
+    </div>
+    <div>
+      <input id="playerName" maxlength="18" placeholder="Seu nome" aria-label="Seu nome">
+      <button class="primary" onclick="saveName()">Salvar</button>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="play">Jogar</button>
+    <button class="tab" data-tab="ranking">🏆 Ranking</button>
+    <button class="tab" data-tab="store">🛍️ Loja</button>
+    <button class="tab" data-tab="profile">👤 Perfil</button>
+  </nav>
+
+  <section id="play" class="section active">
+    <div class="grid">
+      <div class="panel">
+        <h2>Partida de damas</h2>
+        <div class="muted">Modo local para 2 jogadores no mesmo dispositivo.</div>
+        <div class="status" id="status">Vez das vermelhas</div>
+        <div class="board-wrap"><div class="board" id="board" aria-label="Tabuleiro de damas"></div></div>
+        <div class="controls">
+          <button class="primary" onclick="newGame()">Nova partida grátis</button>
+          <button class="secondary" onclick="resetGame()">Reiniciar</button>
+        </div>
+        <p class="note">As peças vermelhas começam. Clique numa peça e depois numa casa escura para mover. Capturas são obrigatórias quando disponíveis.</p>
+      </div>
+      <div class="panel">
+        <h2>Seu progresso</h2>
+        <div class="stats">
+          <div class="stat"><span class="muted">Vitórias</span><strong id="wins">0</strong></div>
+          <div class="stat"><span class="muted">Partidas</span><strong id="games">0</strong></div>
+          <div class="stat"><span class="muted">Fichas ganhas</span><strong id="earned">0</strong></div>
+          <div class="stat"><span class="muted">Posição</span><strong id="position">—</strong></div>
+        </div>
+        <p class="note">Cada vitória concede 100 fichas virtuais. Não há taxa para iniciar partidas nem conversão das fichas em dinheiro.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="ranking" class="section">
+    <div class="panel">
+      <h2>🏆 Top ranking</h2>
+      <p class="muted">Classificação demonstrativa salva neste dispositivo.</p>
+      <div class="list" id="leaderboard"></div>
+    </div>
+  </section>
+
+  <section id="store" class="section">
+    <div class="panel">
+      <h2>🛍️ Loja de recompensas</h2>
+      <p class="muted">Use suas fichas virtuais para liberar visuais, avatares e títulos.</p>
+      <div class="list" id="shop"></div>
+      <hr style="border-color:#ffffff18;margin:18px 0">
+      <h3>🖼️ Escolha sua foto de perfil</h3>
+      <p class="muted">Selecione um avatar abaixo. O padrão é gratuito.</p>
+      <div class="avatar-pick" id="avatarPicker"></div>
+    </div>
+  </section>
+
+  <section id="profile" class="section">
+    <div class="panel">
+      <h2>👤 Perfil do jogador</h2>
+      <div class="item">
+        <div class="avatar" id="profileAvatar">🙂</div>
+        <div style="flex:1">
+          <strong id="profileName">Jogador</strong>
+          <small>Conta local</small>
+        </div>
+        <span class="tag">ATIVO</span>
+      </div>
+      <p id="profileStats" class="muted" style="margin-top:12px"></p>
+      <button class="secondary" onclick="resetProgress()">Zerar progresso local</button>
+      <p class="note">Este protótipo guarda nome, fichas, avatar e estatísticas apenas no navegador.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+
+// Dados padrão (sempre com 50.000 fichas iniciais para testar a loja)
+const DEFAULT_DATA = {
+  name:'Jogador',
+  coins:5000,
+  wins:0,
+  games:0,
+  earned:0,
+  owned:[],
+  avatar:'😕'
+};
+
+let data = JSON.parse(localStorage.getItem('damasArena')||'null') || {...DEFAULT_DATA};
+// Garante campos novos em dados antigos
+data = {...DEFAULT_DATA, ...data};
+
+let board=[], turn='red', selected=null, finished=false;
+
+const THEMES={
+ wood:{light:'#f0d9ad',dark:'#8c5b38',border:'#72502f'},
+ ocean:{light:'#cfe8ff',dark:'#2f6fa8',border:'#1f4d75'},
+ amethyst:{light:'#e8d9ff',dark:'#6b4a9e',border:'#4a3273'}
+};
+
+// Avatares gratuitos e pagos
+const AVATARS = [
+  {id:'🙂', label:'Sorriso',  price:0},
+  {id:'😎', label:'Estiloso', price:0},
+  {id:'🐉', label:'Dragão',   price:10000},
+  {id:'🦁', label:'Leão',     price:25000},
+  {id:'👑', label:'Coroa',    price:50000},
+  {id:'🚀', label:'Foguete',  price:100000}
+];
+
+function applyTheme(){
+  let id = data.owned.includes('amethyst') ? 'amethyst'
+         : data.owned.includes('ocean')    ? 'ocean'
+         : 'wood';
+  let t=THEMES[id], root=document.documentElement.style;
+  root.setProperty('--light',t.light);
+  root.setProperty('--dark',t.dark);
+  root.setProperty('--border',t.border);
+}
+
+function save(){
+  localStorage.setItem('damasArena',JSON.stringify(data));
+  renderInfo();
+}
+
+function saveName(){
+  let n=$('playerName').value.trim();
+  if(n){data.name=n;save();renderRanking();}
+}
+
+function renderInfo(){
+  $('coins').textContent=data.coins.toLocaleString('pt-BR');
+  $('wins').textContent=data.wins;
+  $('games').textContent=data.games;
+  $('earned').textContent=data.earned;
+  $('playerName').value=data.name;
+  $('profileName').textContent=data.name;
+  $('profileStats').textContent=`${data.wins} vitórias em ${data.games} partidas · ${data.coins.toLocaleString('pt-BR')} fichas disponíveis`;
+
+  // Avatar do perfil
+  let av = AVATARS.find(a=>a.id===data.avatar) || AVATARS[0];
+  $('profileAvatar').textContent = av.id;
+
+  renderRanking();
+}
+
+/* ---------- JOGO ---------- */
+function setup(){
+  board=Array.from({length:8},()=>Array(8).fill(null));
+  for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2===1)board[r][c]={color:'black',king:false};
+  for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2===1)board[r][c]={color:'red',king:false};
+  turn='red';selected=null;finished=false;
+  renderBoard();setStatus();
+}
+
+function setStatus(msg){$('status').textContent=msg||(turn==='red'?'Vez das vermelhas':'Vez das pretas');}
+
+function renderBoard(){
+  let el=$('board');el.innerHTML='';
+  let hints=[];
+  if(selected){hints=movesFor(selected.r,selected.c).filter(m=>!hasCapture(turn)||m.capture);}
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    let sq=document.createElement('div');
+    sq.className='sq '+((r+c)%2?'dark':'light');
+    if(selected&&selected.r===r&&selected.c===c)sq.classList.add('selected');
+    if(hints.some(h=>h.r===r&&h.c===c))sq.classList.add('hint');
+    let p=board[r][c];
+    if(p){let d=document.createElement('div');d.className='piece '+p.color+(p.king?' king':'');sq.appendChild(d)}
+    sq.onclick=()=>clickSquare(r,c);
+    el.appendChild(sq);
+  }
+}
+
+function dirs(p){
+  if(p.king)return [[1,1],[1,-1],[-1,1],[-1,-1]];
+  return p.color==='red'?[[-1,1],[-1,-1]]:[[1,1],[1,-1]];
+}
+
+function movesFor(r,c){
+  let p=board[r][c],out=[];
+  if(!p)return out;
+  for(let [dr,dc] of dirs(p)){
+    let nr=r+dr,nc=c+dc;
+    if(nr>=0&&nr<8&&nc>=0&&nc<8&&!board[nr][nc])out.push({r:nr,c:nc});
+    let jr=r+2*dr,jc=c+2*dc;
+    if(jr>=0&&jr<8&&jc>=0&&jc<8&&board[nr]?.[nc]&&board[nr][nc].color!==p.color&&!board[jr][jc])
+      out.push({r:jr,c:jc,capture:{r:nr,c:nc}});
+  }
+  return out;
+}
+
+function hasCapture(color){
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)
+    if(board[r][c]?.color===color&&movesFor(r,c).some(m=>m.capture))return true;
+  return false;
+}
+
+function clickSquare(r,c){
+  if(finished)return;
+  let p=board[r][c];
+  if(selected){
+    let opts=movesFor(selected.r,selected.c),m=opts.find(x=>x.r===r&&x.c===c);
+    if(m&&(!hasCapture(turn)||m.capture)){
+      let piece=board[selected.r][selected.c];
+      board[selected.r][selected.c]=null;board[r][c]=piece;
+      if(m.capture)board[m.capture.r][m.capture.c]=null;
+      if((piece.color==='red'&&r===0)||(piece.color==='black'&&r===7))piece.king=true;
+      selected=null;
+      let more=m.capture&&movesFor(r,c).some(x=>x.capture);
+      if(more){selected={r,c};setStatus('Continue capturando com a mesma peça')}
+      else{turn=turn==='red'?'black':'red';setStatus();checkEnd()}
+      renderBoard();return;
+    }
+  }
+  if(p&&p.color===turn){
+    selected={r,c};renderBoard();
+    if(hasCapture(turn))setStatus('Há captura disponível: escolha uma captura');
+  }else{selected=null;renderBoard()}
+}
+
+function checkEnd(){
+  let count={red:0,black:0};
+  for(let row of board)for(let p of row)if(p)count[p.color]++;
+  let movable=false;
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++)
+    if(board[r][c]?.color===turn&&movesFor(r,c).length)movable=true;
+  if(!count[turn]||!movable){
+    finished=true;
+    let winner=turn==='red'?'pretas':'vermelhas';
+    setStatus('Fim de jogo! Vitória das '+winner+'.');
+    data.games++;
+    if(turn==='black'){
+      data.wins++;data.earned+=100;data.coins+=100;
+      save();
+      setStatus('Vermelhas venceram! +100 fichas para '+data.name);
+    }else{
+      save();
+    }
+  }
+}
+
+function newGame(){setup()}
+function resetGame(){setup()}
+
+/* ---------- RANKING ---------- */
+function renderRanking(){
+  let rows=[
+    {name:data.name,wins:data.wins,me:true},
+    {name:'DamaRápida',wins:18},
+    {name:'ReiDoTabuleiro',wins:15},
+    {name:'Estratégia10',wins:12},
+    {name:'JogaDamas',wins:9}
+  ].sort((a,b)=>b.wins-a.wins);
+  $('leaderboard').innerHTML='';
+  rows.forEach((x,i)=>{
+    let row=document.createElement('div');
+    row.className='item';
+    row.innerHTML=`<span class="rank">#${i+1}</span>
+      <div style="flex:1"><strong>${x.name}${x.me?' (você)':''}</strong><small>${x.wins} vitórias</small></div>
+      <span class="tag">${i===0?'LÍDER':'JOGADOR'}</span>`;
+    $('leaderboard').append(row);
+  });
+  let pos=rows.findIndex(x=>x.me);
+  $('position').textContent='#'+(pos+1);
+}
+
+/* ---------- LOJA ---------- */
+const products=[
+  {id:'ocean',   name:'Tema oceano',   price:10000,  desc:'Visual azul para a arena'},
+  {id:'amethyst',name:'Tema ametista', price:25000,  desc:'Visual roxo para a arena'},
+  {id:'crown',   name:'Título Mestre', price:50000,  desc:'Título especial no perfil'},
+  {id:'diamond', name:'Título Diamante',price:100000,desc:'Título lendário exclusivo'}
+];
+
+function renderShop(){
+  // Produtos
+  $('shop').innerHTML='';
+  products.forEach(p=>{
+    let owned=data.owned.includes(p.id),row=document.createElement('div');
+    row.className='item';
+    let info=document.createElement('div');
+    info.innerHTML=`<strong>${p.name}</strong><small>${p.desc}</small>`;
+    let b=document.createElement('button');
+    b.className=owned?'secondary':'primary';
+    b.textContent=owned?'Adquirido':`🪙 ${p.price.toLocaleString('pt-BR')}`;
+    b.disabled=owned||data.coins<p.price;
+    b.onclick=()=>{
+      if(data.coins>=p.price&&!data.owned.includes(p.id)){
+        data.coins-=p.price;data.owned.push(p.id);save();applyTheme();renderShop();
+      }
+    };
+    row.append(info,b);$('shop').append(row);
+  });
+
+  // Avatares
+  $('avatarPicker').innerHTML='';
+  AVATARS.forEach(a=>{
+    let owned = a.price===0 || data.owned.includes('avatar_'+a.id);
+    let opt=document.createElement('div');
+    opt.className='avatar-option'+(data.avatar===a.id?' selected':'');
+    opt.title = owned ? a.label : `${a.label} · 🪙 ${a.price.toLocaleString('pt-BR')}`;
+    opt.textContent = a.id;
+    opt.onclick=()=>{
+      if(owned){
+        data.avatar=a.id;save();
+        document.querySelectorAll('.avatar-option').forEach(x=>x.classList.remove('selected'));
+        opt.classList.add('selected');
+      }else if(data.coins>=a.price){
+        if(confirm(`Desbloquear avatar "${a.label}" por 🪙 ${a.price.toLocaleString('pt-BR')}?`)){
+          data.coins-=a.price;
+          data.owned.push('avatar_'+a.id);
+          data.avatar=a.id;
+          save();renderShop();
+        }
+      }else{
+        alert('Fichas insuficientes!');
+      }
+    };
+    $('avatarPicker').append(opt);
+  });
+}
+
+/* ---------- RESET ---------- */
+function resetProgress(){
+  if(confirm('Tem certeza? Isso apaga seu progresso neste navegador.')){
+    data={...DEFAULT_DATA};
+    save();applyTheme();setup();renderShop();renderRanking();
+  }
+}
+
+/* ---------- NAVEGAÇÃO ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');$(t.dataset.tab).classList.add('active');
+  if(t.dataset.tab==='ranking')renderRanking();
+  if(t.dataset.tab==='store')renderShop();
+});
+
+/* ---------- INICIALIZAÇÃO ---------- */
+applyTheme();
+renderInfo();
+renderShop();
+setup();      // Tabuleiro já montado ao abrir
+renderRanking();
+</script>
+</body></html>
